@@ -13,14 +13,28 @@ import json
 import time
 from typing import Optional, Dict, List
 
-# Cache directory within backend
-CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "cache_data")
+# Determine cache directory
+# In serverless environments like Vercel, the file system is read-only except for /tmp
+if os.environ.get("VERCEL") or os.environ.get("AWS_EXECUTION_ENV"):
+    CACHE_DIR = os.path.join("/tmp", "cache_data")
+else:
+    CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "cache_data")
+
 TTL_SECONDS = 86400  # 24 hours
 
 class SuburbCache:
     def __init__(self):
-        if not os.path.exists(CACHE_DIR):
-            os.makedirs(CACHE_DIR, exist_ok=True)
+        global CACHE_DIR
+        try:
+            if not os.path.exists(CACHE_DIR):
+                os.makedirs(CACHE_DIR, exist_ok=True)
+        except OSError as e:
+            if e.errno == 30:  # Read-only file system
+                CACHE_DIR = os.path.join("/tmp", "cache_data")
+                if not os.path.exists(CACHE_DIR):
+                    os.makedirs(CACHE_DIR, exist_ok=True)
+            else:
+                raise
             
     def _get_path(self, suburb_slug: str) -> str:
         safe_slug = "".join([c if c.isalnum() or c in "-_" else "_" for c in suburb_slug.lower()])
