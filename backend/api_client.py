@@ -4,18 +4,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
 RAPIDAPI_HOST = "realty-in-au.p.rapidapi.com"
 
 class RealtyClient:
     def __init__(self):
-        if not RAPIDAPI_KEY:
+        self.base_url = f"https://{RAPIDAPI_HOST}"
+        
+    @property
+    def headers(self):
+        key = os.getenv("RAPIDAPI_KEY")
+        if not key:
             raise ValueError("RAPIDAPI_KEY not found in environment variables")
-        self.headers = {
-            "X-RapidAPI-Key": RAPIDAPI_KEY,
+        return {
+            "X-RapidAPI-Key": key,
             "X-RapidAPI-Host": RAPIDAPI_HOST
         }
-        self.base_url = f"https://{RAPIDAPI_HOST}"
 
     def auto_complete(self, query: str):
         """
